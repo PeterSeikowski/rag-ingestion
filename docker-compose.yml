@@ -1,0 +1,58 @@
+version: "3.9"
+
+# Elasticsearch is intentionally NOT defined here: it is treated as an
+# external dependency reachable via ELASTICSEARCH_URL. Point it at a
+# cluster you already run (local single-node ES 8.x, a shared dev cluster,
+# etc). See README.md for a one-off local ES container command.
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    command: ["uvicorn", "rag_ingestion.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    volumes:
+      - temp_uploads:/tmp/rag_ingestion_uploads
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    # --pool=solo: MVP choice. Avoids fork-after-construct issues with the
+    # long-lived Redis/Elasticsearch clients built once at worker startup.
+    # See IMPLEMENTATION_PLAN.md section 9 for the tradeoff and the
+    # multi-process scaling TODO.
+    command: ["celery", "-A", "rag_ingestion.workers.celery_app", "worker", "--pool=solo", "--loglevel=INFO"]
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    volumes:
+      # Shared with `api`: the worker must be able to read PDFs the API
+      # process wrote to TEMP_UPLOAD_DIR before enqueuing the task.
+      - temp_uploads:/tmp/rag_ingestion_uploads
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  temp_uploads:

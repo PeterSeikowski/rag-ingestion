@@ -1,0 +1,40 @@
+# --- Web / API ---
+fastapi==0.139.0
+uvicorn[standard]==0.51.0
+python-multipart==0.0.32
+
+# --- Data / config ---
+pydantic==2.13.4
+pydantic-settings==2.14.2
+
+# --- Async processing ---
+celery==5.6.3
+redis==8.0.1
+
+# --- Vector store ---
+# Pinned to the 8.x client line to match Elasticsearch 8.x (see README) —
+# the elasticsearch-py major version should track the server's major
+# version; do not bump to 9.x without also upgrading the target cluster.
+elasticsearch>=8.17.0,<9.0.0
+
+# --- PDF parsing ---
+# Pinned exactly (not a range): Docling's public API has shifted across
+# minor versions, and the adapter's field-extraction is written defensively
+# against this specific version. Bump deliberately, re-verify the adapter.
+docling==2.15.1
+
+# --- Embeddings ---
+litellm==1.91.1
+
+# --- Tokenization (approximate, provider-agnostic chunk sizing) ---
+tiktoken==0.13.0
+
+# --- Logging ---
+python-json-logger==2.0.7
+
+# --- HTTP client (used by health checks / test client) ---
+httpx==0.28.1
+
+# --- Testing ---
+pytest==9.1.1
+pytest-mock==3.15.1
