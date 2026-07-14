@@ -25,6 +25,7 @@ docling==2.15.1
 
 # --- Embeddings ---
 litellm==1.91.1
+openai==2.45.0
 
 # --- Tokenization (approximate, provider-agnostic chunk sizing) ---
 tiktoken==0.13.0

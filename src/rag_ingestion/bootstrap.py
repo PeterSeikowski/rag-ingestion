@@ -132,7 +132,7 @@ def _build_embedder(settings: Settings) -> Embedder:
     """Factory: Instantiates the correct Embedder adapter based on config."""
     
     if settings.embedding_provider == "azureopenai":
-        if not all([settings.azure_openai_endpoint, settings.azure_openai_api_key, settings.azure_openai_deployment_name]):
+        if not all([settings.azure_openai_endpoint, settings.azure_openai_api_key, settings.azure_openai_api_version]):
             raise ConfigurationError("Missing Azure OpenAI configuration variables in environment.")
             
         return AzureOpenAIEmbedder(
