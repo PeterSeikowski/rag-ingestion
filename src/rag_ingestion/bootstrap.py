@@ -138,6 +138,7 @@ def _build_embedder(settings: Settings) -> Embedder:
         return AzureOpenAIEmbedder(
             azure_endpoint=settings.azure_openai_endpoint,
             api_key=settings.azure_openai_api_key,
+            api_version=settings.azure_openai_api_version,
             deployment_name=settings.embedding_model,
             dimensions_override=settings.embedding_dimensions
         )

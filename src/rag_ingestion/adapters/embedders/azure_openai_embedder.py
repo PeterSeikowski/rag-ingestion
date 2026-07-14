@@ -35,7 +35,7 @@ class AzureOpenAIEmbedder:
         azure_endpoint: str,
         api_key: str,
         deployment_name: str,
-        api_version: str = "2023-05-15",
+        api_version: str = "2024-12-01-preview",
         dimensions_override: int | None = None,
     ) -> None:
         """
