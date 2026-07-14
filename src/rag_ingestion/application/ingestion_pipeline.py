@@ -217,7 +217,7 @@ def _embed_and_index(
     job_service.mark_stage(job_id, JobStage.EMBEDDING)
     try:
         embedding_config = EmbeddingConfig(
-            model=container.settings.litellm_model,
+            model=container.embedder.model,
             dimensions=container.embedder.dimensions,
             batch_size=container.settings.embedding_batch_size,
         )

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -50,14 +51,21 @@ class Settings(BaseSettings):
     es_chunks_index: str = "rag_chunks_v1"
     es_embeddings_index: str = "rag_embeddings_v1"
 
+    # --- Embeddings ---
+    embedding_provider: Literal["litellm", "azureopenai"] = "azureopenai"
+    embedding_model: Literal["text-embedding-3-large"] = "text-embedding-3-large"
+    embedding_batch_size: int = 32
+    embedding_dimensions: int | None = None
     # --- LiteLLM embeddings ---
-    litellm_model: str = "text-embedding-3-small"
     litellm_api_key: str | None = None
     litellm_api_base: str | None = None
     litellm_api_version: str | None = None
     litellm_provider: str | None = None
-    embedding_batch_size: int = 32
-    embedding_dimensions: int | None = None
+    # --- AzureOpenAI embeddings ---
+    azure_openai_endpoint: str | None = None
+    azure_openai_api_key: str | None = None
+    
+
 
     # --- Chunking defaults ---
     default_chunk_size_tokens: int = 512

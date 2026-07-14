@@ -25,6 +25,7 @@ from functools import lru_cache
 
 from rag_ingestion.adapters.chunkers.registry import build_chunker_registry
 from rag_ingestion.adapters.embedders.litellm_embedder import LiteLLMEmbedder
+from rag_ingestion.adapters.embedders.azure_openai_embedder import AzureOpenAIEmbedder
 from rag_ingestion.adapters.jobs.redis_job_repository import RedisJobRepository
 from rag_ingestion.adapters.parsers.docling_pdf_parser import DoclingPdfParser
 from rag_ingestion.adapters.vectorstores.elasticsearch_writer import ElasticsearchVectorStoreWriter
@@ -72,14 +73,7 @@ def build_container(settings: Settings | None = None) -> AppContainer:
     job_repository = RedisJobRepository(settings.redis_url, ttl_seconds=settings.job_status_ttl_seconds)
     parser = DoclingPdfParser(enable_ocr=settings.docling_enable_ocr)
     chunkers = build_chunker_registry()
-    embedder = LiteLLMEmbedder(
-        model=settings.litellm_model,
-        api_key=settings.litellm_api_key,
-        api_base=settings.litellm_api_base,
-        api_version=settings.litellm_api_version,
-        provider=settings.litellm_provider,
-        dimensions_override=settings.embedding_dimensions,
-    )
+    embedder = _build_embedder(settings=settings)
 
     dimensions = embedder.dimensions
     if dimensions is None:
@@ -133,3 +127,31 @@ def ensure_vector_store_ready() -> None:
         get_container().vector_store.ensure_indices()
     except Exception:
         logger.exception("Failed to ensure Elasticsearch indices exist at startup; will retry on first use")
+
+def _build_embedder(settings: Settings) -> Embedder:
+    """Factory: Instantiates the correct Embedder adapter based on config."""
+    
+    if settings.embedding_provider == "azureopenai":
+        if not all([settings.azure_openai_endpoint, settings.azure_openai_api_key, settings.azure_openai_deployment_name]):
+            raise ConfigurationError("Missing Azure OpenAI configuration variables in environment.")
+            
+        return AzureOpenAIEmbedder(
+            azure_endpoint=settings.azure_openai_endpoint,
+            api_key=settings.azure_openai_api_key,
+            deployment_name=settings.embedding_model,
+            dimensions_override=settings.embedding_dimensions
+        )
+        
+    elif settings.embedding_provider == "litellm":
+        return LiteLLMEmbedder(
+            model=settings.embedding_model,
+            api_key=settings.litellm_api_key,
+            api_base=settings.litellm_api_base,
+            api_version=settings.litellm_api_version,
+            provider=settings.litellm_provider,
+            dimensions_override=settings.embedding_dimensions,
+        )
+        
+    else:
+        # Fallback für ungültige Konfiguration
+        raise ConfigurationError(f"Unknown embedding_provider: {settings.embedding_provider}")
